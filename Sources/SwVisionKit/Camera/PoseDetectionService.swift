@@ -5,6 +5,12 @@
 public final class PoseDetectionService: NSObject, ObservableObject {
     @Published public private(set) var pose: PoseObservation?
     @Published public private(set) var isFrontCamera = true
+    /// Latest camera frame, already rotated/mirrored to match what's on screen
+    /// (same capture connection that feeds the Vision request). Used by
+    /// `VisionCaptureCompositor` to composite recordings/photos — not
+    /// `@Published` since consumers pull it on their own capture cadence
+    /// rather than reacting to every frame.
+    public private(set) var latestPixelBuffer: CVPixelBuffer?
 
     nonisolated public let captureSession: AVCaptureSession
     private let captureQueue = DispatchQueue(label: "SwVisionKit.captureQueue", qos: .userInitiated)
@@ -127,6 +133,7 @@ extension PoseDetectionService: AVCaptureVideoDataOutputSampleBufferDelegate {
         let detected = BodyPoseDetector.detect(in: pixelBuffer, orientation: .up)
         Task { @MainActor [weak self] in
             self?.pose = detected
+            self?.latestPixelBuffer = pixelBuffer
         }
     }
 }
