@@ -22,7 +22,7 @@ public struct PostureHUDView: View {
                 }
                 .padding(.horizontal, 20)
                 .padding(.vertical, 12)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+                .background(.black.opacity(0.3), in: RoundedRectangle(cornerRadius: 16))
             } else {
                 ProgressView()
                     .tint(.white)

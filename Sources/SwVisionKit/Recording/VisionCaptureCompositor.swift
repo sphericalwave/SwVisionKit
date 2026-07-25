@@ -72,9 +72,9 @@ public final class VisionCaptureCompositor: ObservableObject {
         let content = ZStack {
             PoseOverlayCanvas(pose: detector.pose)
             VStack {
-                Spacer()
                 PostureHUDView(report: reportProvider())
-                    .padding(.bottom, 32)
+                    .padding(.top, 12)
+                Spacer()
             }
         }
         .frame(width: size.width, height: size.height)

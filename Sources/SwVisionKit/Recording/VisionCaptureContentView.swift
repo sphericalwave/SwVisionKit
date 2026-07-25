@@ -20,9 +20,9 @@ public struct VisionCaptureContentView: View {
             CameraPreviewView(captureSession: detector.captureSession)
             PoseOverlayCanvas(pose: detector.pose)
             VStack {
-                Spacer()
                 PostureHUDView(report: report)
-                    .padding(.bottom, 32)
+                    .padding(.top, 12)
+                Spacer()
             }
         }
     }

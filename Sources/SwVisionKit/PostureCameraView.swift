@@ -40,8 +40,10 @@ public struct PostureCameraView: View {
 
             VStack {
                 if compositor.isRecording {
+                    // Sits below the posture HUD card, which now docks to
+                    // the top of the content area (VisionCaptureContentView).
                     recordingBadge
-                        .padding(.top, 8)
+                        .padding(.top, 84)
                 }
                 Spacer()
                 ZStack {

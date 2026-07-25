@@ -10,14 +10,19 @@ public struct VisionCaptureGalleryView: View {
         self.store = store
     }
 
-    private let columns = [GridItem(.adaptive(minimum: 100), spacing: 4)]
+    // Fixed 3-column flexible grid (not `.adaptive`) — `.adaptive` combined
+    // with `VisionCaptureThumbnail`'s `aspectRatio` modifier produced
+    // unpredictable/overlapping cell sizing. Flexible columns give each cell
+    // an exact, evenly-divided width to resolve its aspect ratio against.
+    // Square crop + tight spacing matches the stock Photos library grid.
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 2), count: 3)
 
     public var body: some View {
         NavigationStack {
             ScrollView {
-                LazyVGrid(columns: columns, spacing: 4) {
+                LazyVGrid(columns: columns, spacing: 2) {
                     ForEach(store.records) { record in
-                        VisionCaptureThumbnail(record: record, store: store)
+                        VisionCaptureThumbnail(record: record, store: store, aspectRatio: 1)
                             .onTapGesture { selected = record }
                             .contextMenu {
                                 Button(role: .destructive) {
@@ -28,7 +33,6 @@ public struct VisionCaptureGalleryView: View {
                             }
                     }
                 }
-                .padding(4)
             }
             .navigationTitle("Vision Captures")
             .navigationBarTitleDisplayMode(.inline)
