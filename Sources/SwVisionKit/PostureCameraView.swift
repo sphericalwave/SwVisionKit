@@ -37,7 +37,7 @@ public struct PostureCameraView: View {
     public var body: some View {
         ZStack {
             VisionCaptureContentView(detector: detector, report: report)
-                .ignoresSafeArea()
+                .ignoresSafeArea(edges: .top)
 
             VStack {
                 if compositor.isRecording {
@@ -48,7 +48,7 @@ public struct PostureCameraView: View {
                 HStack {
                     VisionCaptureBottomThumbnail(store: captureStore) { galleryPresented = true }
                         .padding(.leading, 16)
-                        .padding(.bottom, 100)
+                        .padding(.bottom, 8)
                     Spacer()
                 }
             }
@@ -68,7 +68,7 @@ public struct PostureCameraView: View {
                 .transition(.opacity)
             }
         }
-        .ignoresSafeArea()
+        .ignoresSafeArea(edges: .top)
         .navigationTitle("Posture Check")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
