@@ -37,7 +37,6 @@ public struct PostureCameraView: View {
     public var body: some View {
         ZStack {
             VisionCaptureContentView(detector: detector, report: report)
-                .ignoresSafeArea(edges: .top)
 
             VStack {
                 if compositor.isRecording {
@@ -45,12 +44,16 @@ public struct PostureCameraView: View {
                         .padding(.top, 8)
                 }
                 Spacer()
-                HStack {
-                    VisionCaptureBottomThumbnail(store: captureStore) { galleryPresented = true }
-                        .padding(.leading, 16)
-                        .padding(.bottom, 8)
-                    Spacer()
+                ZStack {
+                    captureControls
+
+                    HStack {
+                        VisionCaptureBottomThumbnail(store: captureStore) { galleryPresented = true }
+                            .padding(.leading, 16)
+                        Spacer()
+                    }
                 }
+                .padding(.bottom, 12)
             }
 
             // Brief "Saved" confirmation
@@ -62,40 +65,23 @@ public struct PostureCameraView: View {
                         .padding(.horizontal, 16)
                         .padding(.vertical, 8)
                         .background(.green.opacity(0.85), in: Capsule())
-                        .padding(.top, 80)
+                        .padding(.top, 12)
                     Spacer()
                 }
                 .transition(.opacity)
             }
         }
-        .ignoresSafeArea(edges: .top)
         .navigationTitle("Posture Check")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button { detector.flip() } label: {
                     Image(systemName: "arrow.triangle.2.circlepath.camera")
                 }
-                .tint(.white)
                 .disabled(compositor.isRecording)
             }
             ToolbarItem(placement: .automatic) {
                 HStack(spacing: 16) {
-                    // Photo/video mode toggle
-                    Button {
-                        captureMode = (captureMode == .photo) ? .video : .photo
-                    } label: {
-                        Image(systemName: captureMode == .video ? "video.fill" : "camera.fill")
-                    }
-                    .tint(.white)
-                    .disabled(compositor.isRecording)
-
-                    // Photo/video shutter
-                    Button { handleShutter() } label: {
-                        shutterIcon
-                    }
-
                     // Record current text reading
                     Button {
                         let r = report ?? PostureReport(postureClass: .unknown, spineAngle: 0, hipTilt: nil, shoulderTilt: nil)
@@ -110,12 +96,10 @@ public struct PostureCameraView: View {
                     Button { recordingsPresented = true } label: {
                         Image(systemName: "list.bullet.clipboard")
                     }
-                    .tint(.white)
                     .badge(store.snapshots.count)
 
                     if isPresented {
                         Button("Done") { dismiss() }
-                            .tint(.white)
                     }
                 }
             }
@@ -128,6 +112,28 @@ public struct PostureCameraView: View {
         }
         .task { detector.start() }
         .onDisappear { detector.stop() }
+    }
+
+    /// Photo/video mode toggle + shutter — centered above the tab bar, not
+    /// squeezed into the nav-bar toolbar with the other (smaller, secondary)
+    /// controls.
+    private var captureControls: some View {
+        HStack(spacing: 28) {
+            Button {
+                captureMode = (captureMode == .photo) ? .video : .photo
+            } label: {
+                Image(systemName: captureMode == .video ? "video.fill" : "camera.fill")
+                    .font(.callout.weight(.semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: 34, height: 34)
+                    .background(.black.opacity(0.35), in: Circle())
+            }
+            .disabled(compositor.isRecording)
+
+            Button { handleShutter() } label: {
+                shutterIcon
+            }
+        }
     }
 
     private var shutterIcon: some View {
