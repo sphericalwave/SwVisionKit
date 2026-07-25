@@ -15,7 +15,7 @@ public struct VisionCaptureBottomThumbnail: View {
     public var body: some View {
         if let last = store.lastVideo {
             Button(action: action) {
-                VisionCaptureThumbnail(record: last, store: store)
+                VisionCaptureThumbnail(record: last, store: store, aspectRatio: 1)
                     .frame(width: 48, height: 48)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                     .overlay(RoundedRectangle(cornerRadius: 8).stroke(.white, lineWidth: 2))

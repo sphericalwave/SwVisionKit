@@ -114,10 +114,21 @@ public struct PostureCameraView: View {
         .onDisappear { detector.stop() }
     }
 
-    /// Photo/video mode toggle + shutter — centered above the tab bar, not
-    /// squeezed into the nav-bar toolbar with the other (smaller, secondary)
-    /// controls.
+    /// Bottom control area, centered above the tab bar. Swaps entirely
+    /// between an idle row (thumbnail / mode toggle / shutter) and a
+    /// recording row (pause-resume / stop / capture-still), matching Apple
+    /// Camera's own control set rather than trying to keep one button doing
+    /// double duty.
+    @ViewBuilder
     private var captureControls: some View {
+        if compositor.isRecording {
+            recordingControls
+        } else {
+            idleControls
+        }
+    }
+
+    private var idleControls: some View {
         HStack(spacing: 28) {
             Button {
                 captureMode = (captureMode == .photo) ? .video : .photo
@@ -128,33 +139,66 @@ public struct PostureCameraView: View {
                     .frame(width: 34, height: 34)
                     .background(.black.opacity(0.35), in: Circle())
             }
-            .disabled(compositor.isRecording)
 
-            Button { handleShutter() } label: {
-                shutterIcon
+            Button {
+                switch captureMode {
+                case .photo:
+                    if compositor.capturePhoto() != nil { showSaved() }
+                case .video:
+                    compositor.startVideoRecording()
+                }
+            } label: {
+                ZStack {
+                    Circle().stroke(.white, lineWidth: 3).frame(width: 34, height: 34)
+                    Circle().fill(captureMode == .video ? .red : .white).frame(width: 26, height: 26)
+                }
             }
         }
     }
 
-    private var shutterIcon: some View {
-        ZStack {
-            Circle()
-                .stroke(.white, lineWidth: 3)
-                .frame(width: 34, height: 34)
-            if captureMode == .video && compositor.isRecording {
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(.red)
-                    .frame(width: 16, height: 16)
-            } else {
-                Circle()
-                    .fill(.red)
-                    .frame(width: 26, height: 26)
+    /// Pause/resume (leading), stop (center), capture-still (trailing) — the
+    /// same three controls Apple's Camera app shows once video recording
+    /// starts.
+    private var recordingControls: some View {
+        HStack(spacing: 36) {
+            Button {
+                if compositor.isPaused {
+                    compositor.resumeVideoRecording()
+                } else {
+                    compositor.pauseVideoRecording()
+                }
+            } label: {
+                Image(systemName: compositor.isPaused ? "play.fill" : "pause.fill")
+                    .font(.callout.weight(.semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: 34, height: 34)
+                    .background(.black.opacity(0.35), in: Circle())
+            }
+
+            Button {
+                Task {
+                    if await compositor.stopVideoRecording() != nil { showSaved() }
+                }
+            } label: {
+                ZStack {
+                    Circle().stroke(.white, lineWidth: 3).frame(width: 34, height: 34)
+                    RoundedRectangle(cornerRadius: 4).fill(.red).frame(width: 16, height: 16)
+                }
+            }
+
+            Button {
+                if compositor.capturePhoto() != nil { showSaved() }
+            } label: {
+                ZStack {
+                    Circle().stroke(.white, lineWidth: 3).frame(width: 34, height: 34)
+                    Circle().fill(.white).frame(width: 26, height: 26)
+                }
             }
         }
     }
 
     private var recordingBadge: some View {
-        Label(elapsedLabel, systemImage: "record.circle.fill")
+        Label(elapsedLabel, systemImage: compositor.isPaused ? "pause.circle.fill" : "record.circle.fill")
             .font(.callout.weight(.semibold))
             .foregroundStyle(.white)
             .padding(.horizontal, 12)
@@ -165,21 +209,6 @@ public struct PostureCameraView: View {
     private var elapsedLabel: String {
         let s = Int(compositor.elapsed.rounded())
         return String(format: "%d:%02d", s / 60, s % 60)
-    }
-
-    private func handleShutter() {
-        switch captureMode {
-        case .photo:
-            if compositor.capturePhoto() != nil { showSaved() }
-        case .video:
-            if compositor.isRecording {
-                Task {
-                    if await compositor.stopVideoRecording() != nil { showSaved() }
-                }
-            } else {
-                compositor.startVideoRecording()
-            }
-        }
     }
 
     private func showSaved() {

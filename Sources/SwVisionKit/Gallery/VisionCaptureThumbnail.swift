@@ -4,11 +4,17 @@ import SwiftUI
 public struct VisionCaptureThumbnail: View {
     let record: VisionCaptureRecord
     @ObservedObject var store: VisionCaptureStore
+    /// Native camera-buffer aspect (portrait, ~3:4) by default — media
+    /// previews shouldn't be force-cropped to square. Pass `1` for contexts
+    /// where a small square icon/button is genuinely wanted (e.g. the
+    /// bottom-left last-video button), not a media preview.
+    let aspectRatio: CGFloat
     @State private var image: UIImage?
 
-    public init(record: VisionCaptureRecord, store: VisionCaptureStore) {
+    public init(record: VisionCaptureRecord, store: VisionCaptureStore, aspectRatio: CGFloat = 3.0 / 4.0) {
         self.record = record
         self.store = store
+        self.aspectRatio = aspectRatio
     }
 
     public var body: some View {
@@ -22,7 +28,7 @@ public struct VisionCaptureThumbnail: View {
                     Rectangle().fill(.secondary.opacity(0.15))
                 }
             }
-            .aspectRatio(1, contentMode: .fill)
+            .aspectRatio(aspectRatio, contentMode: .fill)
             .clipped()
 
             if record.kind == .video {
