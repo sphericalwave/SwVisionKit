@@ -1,11 +1,12 @@
 #if os(iOS)
 import SwiftUI
-import AVFoundation
+import AVKit
 
 /// Full-screen swipeable viewer over every saved capture — Photos-app style:
 /// back button, swipe left/right between items (`TabView(.page)`), a
-/// filmstrip of thumbnails to jump directly to one, and (for video) a custom
-/// play/pause + scrub + mute bar. Share and delete at the bottom.
+/// filmstrip of thumbnails to jump directly to one, and (for video) AVKit's
+/// native `VideoPlayer` for playback/scrub/mute. Share and delete at the
+/// bottom.
 public struct VisionCapturePlayerView: View {
     @ObservedObject var store: VisionCaptureStore
     @Environment(\.dismiss) private var dismiss
@@ -171,61 +172,27 @@ private struct PhotoPage: View {
 private struct VideoPage: View {
     let record: VisionCaptureRecord
     @ObservedObject var store: VisionCaptureStore
-    @StateObject private var playback = VideoPlaybackController()
+    // Built in onAppear, never inline in body — same lifecycle-correct
+    // pattern as SwMediaKit's BundledVideoPlayer.
+    @State private var player: AVPlayer?
 
     var body: some View {
-        ZStack {
-            if let player = playback.player {
-                VideoPlayerLayerView(player: player)
+        Group {
+            if let player {
+                VideoPlayer(player: player)
             } else {
                 ProgressView().tint(.white)
             }
-
-            VStack {
-                Spacer()
-                controls
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 12)
-            }
         }
         .onAppear {
-            playback.load(url: store.fileURL(for: record))
-            playback.play()
+            let newPlayer = AVPlayer(url: store.fileURL(for: record))
+            player = newPlayer
+            newPlayer.play()
         }
         .onDisappear {
-            playback.stop()
+            player?.pause()
+            player = nil
         }
-    }
-
-    private var controls: some View {
-        HStack(spacing: 14) {
-            Button {
-                playback.togglePlayPause()
-            } label: {
-                Image(systemName: playback.isPlaying ? "pause.fill" : "play.fill")
-                    .foregroundStyle(.white)
-            }
-
-            Slider(
-                value: $playback.currentTime,
-                in: 0...max(playback.duration, 0.1),
-                onEditingChanged: { editing in
-                    playback.isScrubbing = editing
-                    if !editing { playback.seek(to: playback.currentTime) }
-                }
-            )
-            .tint(.white)
-
-            Button {
-                playback.toggleMute()
-            } label: {
-                Image(systemName: playback.isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
-                    .foregroundStyle(.white)
-            }
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-        .background(.black.opacity(0.5), in: Capsule())
     }
 }
 #endif
