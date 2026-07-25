@@ -30,19 +30,12 @@ public struct VisionCaptureThumbnail: View {
             .aspectRatio(aspectRatio, contentMode: .fill)
             .clipped()
 
-            if record.kind == .video {
-                HStack(spacing: 2) {
-                    Image(systemName: "play.fill")
-                    if let duration = record.durationSeconds {
-                        Text(formatted(duration))
-                    }
-                }
-                .font(.caption2.weight(.semibold))
-                .foregroundStyle(.white)
-                .padding(.horizontal, 6)
-                .padding(.vertical, 3)
-                .background(.black.opacity(0.55), in: Capsule())
-                .padding(6)
+            if record.kind == .video, let duration = record.durationSeconds {
+                Text(formatted(duration))
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.white)
+                    .shadow(color: .black.opacity(0.8), radius: 2)
+                    .padding(6)
             }
         }
         .task(id: record.id) { await loadImage() }

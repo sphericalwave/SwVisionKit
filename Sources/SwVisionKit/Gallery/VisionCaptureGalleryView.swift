@@ -65,7 +65,7 @@ public struct VisionCaptureGalleryView: View {
                 }
             }
             .fullScreenCover(item: $selected) { record in
-                VisionCapturePlayerView(record: record, store: store)
+                VisionCapturePlayerView(store: store, initial: record)
             }
         }
     }
