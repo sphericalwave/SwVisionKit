@@ -1,5 +1,6 @@
 #if os(iOS)
 import SwiftUI
+import ImageIO
 
 public struct VisionCaptureThumbnail: View {
     let record: VisionCaptureRecord
@@ -45,8 +46,15 @@ public struct VisionCaptureThumbnail: View {
         let url = record.kind == .video ? store.thumbnailURL(for: record) : store.fileURL(for: record)
         guard let url else { return }
         let loaded = await Task.detached(priority: .userInitiated) { () -> UIImage? in
-            guard let data = try? Data(contentsOf: url) else { return nil }
-            return UIImage(data: data)
+            // Grid cells are small: decode a ~400 px ImageIO thumbnail, never
+            // the full-resolution bitmap.
+            guard let src = CGImageSourceCreateWithURL(url as CFURL, nil),
+                  let cg = CGImageSourceCreateThumbnailAtIndex(src, 0, [
+                      kCGImageSourceCreateThumbnailFromImageAlways: true,
+                      kCGImageSourceCreateThumbnailWithTransform: true,
+                      kCGImageSourceThumbnailMaxPixelSize: 400,
+                  ] as CFDictionary) else { return nil }
+            return UIImage(cgImage: cg)
         }.value
         image = loaded
     }
